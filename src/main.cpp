@@ -45,6 +45,24 @@
 #define SS_29_PIN 22
 #define SS_30_PIN 21
 
+#define numofIR 15
+
+#define IR_PIN1 A0
+#define IR_PIN2 A1
+#define IR_PIN3 A2
+#define IR_PIN4 A3
+#define IR_PIN5 A4
+#define IR_PIN6 A5
+#define IR_PIN7 A6
+#define IR_PIN8 A7
+#define IR_PIN9 A8
+#define IR_PIN10 A9
+#define IR_PIN11 A10
+#define IR_PIN12 A11
+#define IR_PIN13 A12
+#define IR_PIN14 A13
+#define IR_PIN15 A14
+
 #define NR_OF_READERS 30
 
 // #define ESP32_RX 2
@@ -58,6 +76,8 @@
 
 #define dw digitalWrite
 #define dr digitalRead
+
+#define TIME_CHECK_THING 2000 // check the thing every 1 second
 //====================================================
 byte ssPins[NR_OF_READERS] = {
     SS_1_PIN, SS_2_PIN, SS_3_PIN, SS_4_PIN, SS_5_PIN,
@@ -66,6 +86,13 @@ byte ssPins[NR_OF_READERS] = {
     SS_16_PIN, SS_17_PIN, SS_18_PIN, SS_19_PIN, SS_20_PIN,
     SS_21_PIN, SS_22_PIN, SS_23_PIN, SS_24_PIN, SS_25_PIN,
     SS_26_PIN, SS_27_PIN, SS_28_PIN, SS_29_PIN, SS_30_PIN};
+
+byte irPins[numofIR] = {
+    IR_PIN1, IR_PIN2, IR_PIN3, IR_PIN4, IR_PIN5,
+    IR_PIN6, IR_PIN7, IR_PIN8, IR_PIN9, IR_PIN10,
+    IR_PIN11, IR_PIN12, IR_PIN13, IR_PIN14, IR_PIN15};
+
+byte lastThingPos[numofIR] = {0};
 //====================================================
 MFRC522 mfrc522[NR_OF_READERS]; // Create MFRC522 instance.
 MFRC522::MIFARE_Key key;
@@ -74,6 +101,7 @@ MFRC522::MIFARE_Key key;
 byte mode = 0;
 unsigned long uidDec, uidDecTemp; // hien thi so UID dang thap phan
 unsigned long lastTurnBuzzerOn = 0;
+unsigned long lastCheckThing = 0;
 //====================================================
 void dump_byte_array(byte *buffer, byte bufferSize);
 void modeRead();
@@ -142,6 +170,20 @@ void loop()
     }
   }
   modeRead();
+
+  // check the IR
+  if (millis() - lastCheckThing > TIME_CHECK_THING)
+  {
+    String msg = "IR: ";
+    for (int i = 0; i < numofIR; i++)
+    {
+      lastThingPos[i] = dr(irPins[i]);
+      msg += String(lastThingPos[i]);
+    }
+    Serial2.println(msg);
+
+    lastCheckThing = millis();
+  }
 }
 
 /**
@@ -175,7 +217,7 @@ void modeRead()
       }
       Serial.println(uidDec);
       // send uid to esp32
-      String msg = String(reader) + "," + String(uidDec) + "," + String(FLOOR);
+      String msg = "RFID: " + String(reader) + "," + String(uidDec) + "," + String(FLOOR); // send if the thing is there or not
       Serial2.println(msg);
 
       dump_byte_array(mfrc522[reader].uid.uidByte, mfrc522[reader].uid.size);
