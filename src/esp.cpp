@@ -48,6 +48,11 @@ void socketIOEvent(socketIOmessageType_t type, uint8_t *payload, size_t length)
             Serial.println("Got person");
             mega_Serial.println("Open the door");
         }
+        if (output.indexOf("/web/lock-door") > 0)
+        {
+            Serial.println("Lock door");
+            mega_Serial.println("Lock the door");
+        }
         break;
     case sIOtype_EVENT:
         Serial.printf("[IOc] get event: %s\n", payload);
@@ -193,7 +198,7 @@ void loop()
     if (!rfid.PICC_IsNewCardPresent())
     {
         // if no card detected, lock the door
-        mega_Serial.println("Lock");
+        // mega_Serial.println("Lock");
         return;
     }
 

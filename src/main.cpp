@@ -45,7 +45,7 @@
 #define SS_29_PIN 22
 #define SS_30_PIN 21
 
-#define numofIR 15
+#define numofIR 15 // no longer user this
 
 #define IR_PIN1 A0
 #define IR_PIN2 A1
@@ -87,7 +87,7 @@ byte ssPins[NR_OF_READERS] = {
     SS_21_PIN, SS_22_PIN, SS_23_PIN, SS_24_PIN, SS_25_PIN,
     SS_26_PIN, SS_27_PIN, SS_28_PIN, SS_29_PIN, SS_30_PIN};
 
-byte irPins[numofIR] = {
+byte irPins[numofIR] = { // no longer use this
     IR_PIN1, IR_PIN2, IR_PIN3, IR_PIN4, IR_PIN5,
     IR_PIN6, IR_PIN7, IR_PIN8, IR_PIN9, IR_PIN10,
     IR_PIN11, IR_PIN12, IR_PIN13, IR_PIN14, IR_PIN15};
@@ -102,6 +102,7 @@ byte mode = 0;
 unsigned long uidDec, uidDecTemp; // hien thi so UID dang thap phan
 unsigned long lastTurnBuzzerOn = 0;
 unsigned long lastCheckThing = 0;
+unsigned long lastRead = 0;
 //====================================================
 void dump_byte_array(byte *buffer, byte bufferSize);
 void modeRead();
@@ -158,18 +159,23 @@ void loop()
   if (Serial2.available())
   {
     String data = Serial2.readStringUntil('\n');
-    if (data.startsWith("Open the door"))
+    if (data.startsWith("Open"))
     {
+      //open the door and ring the alarm for 3s
       digitalWrite(DOOR_PIN, HIGH);
       dw(BUZZER_PIN, HIGH);
       lastTurnBuzzerOn = millis();
     }
-    else if (data.startsWith("Lock"))
+    else if (data.startsWith("Lock")) // lock the door
     {
       digitalWrite(DOOR_PIN, LOW);
     }
   }
-  modeRead();
+  if (millis() - lastRead > 300)
+  {
+    modeRead();
+    lastRead = millis();
+  }
 
   // check the IR
   if (millis() - lastCheckThing > TIME_CHECK_THING)
@@ -202,7 +208,7 @@ void modeRead()
 {
   for (uint8_t reader = 0; reader < NR_OF_READERS; reader++)
   {
-    // Look for new cards
+    // Look for new cards or even old card remain at its position.
     if (mfrc522[reader].PICC_IsNewCardPresent() && mfrc522[reader].PICC_ReadCardSerial())
     {
       uidDec = 0;
@@ -217,7 +223,7 @@ void modeRead()
       }
       Serial.println(uidDec);
       // send uid to esp32
-      String msg = "RFID: " + String(reader) + "," + String(uidDec) + "," + String(FLOOR); // send if the thing is there or not
+      String msg = "RFID: " + String(reader + 1) + "," + String(uidDec) + "," + String(FLOOR); // send if the thing is there or not
       Serial2.println(msg);
 
       dump_byte_array(mfrc522[reader].uid.uidByte, mfrc522[reader].uid.size);
@@ -230,8 +236,13 @@ void modeRead()
       mfrc522[reader].PICC_HaltA();
       // Stop encryption on PCD
       mfrc522[reader].PCD_StopCrypto1();
-    } // if (mfrc522[reader].PICC_IsNewC
-  } // for(uint8_t reader
+    }
+    else
+    {
+      // to show that no card is read.
+      String msg = "RFID: " + String(reader + 1) + "," + String(0) + "," + String(FLOOR); // send if the thing is there or not
+    }
+  }
 }
 
 void writeToTag(byte numofByte, byte *data)
