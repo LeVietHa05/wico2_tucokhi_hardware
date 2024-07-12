@@ -241,6 +241,7 @@ void modeRead()
     {
       // to show that no card is read.
       String msg = "RFID: " + String(reader + 1) + "," + String(0) + "," + String(FLOOR); // send if the thing is there or not
+      Serial2.println(msg);
     }
   }
 }
