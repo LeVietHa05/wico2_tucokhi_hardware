@@ -29,21 +29,21 @@
 #define SS_13_PIN 38
 #define SS_14_PIN 37
 #define SS_15_PIN 36
-#define SS_16_PIN 35
-#define SS_17_PIN 34
-#define SS_18_PIN 33
-#define SS_19_PIN 32
-#define SS_20_PIN 31
-#define SS_21_PIN 30
-#define SS_22_PIN 29
-#define SS_23_PIN 28
-#define SS_24_PIN 27
-#define SS_25_PIN 26
-#define SS_26_PIN 25
-#define SS_27_PIN 24
-#define SS_28_PIN 23
-#define SS_29_PIN 22
-#define SS_30_PIN 21
+// #define SS_16_PIN 35
+// #define SS_17_PIN 34
+// #define SS_18_PIN 33
+// #define SS_19_PIN 32
+// #define SS_20_PIN 31
+// #define SS_21_PIN 30
+// #define SS_22_PIN 29
+// #define SS_23_PIN 28
+// #define SS_24_PIN 27
+// #define SS_25_PIN 26
+// #define SS_26_PIN 25
+// #define SS_27_PIN 24
+// #define SS_28_PIN 23
+// #define SS_29_PIN 22
+// #define SS_30_PIN 21
 
 #define numofIR 15 // no longer user this
 
@@ -63,7 +63,7 @@
 #define IR_PIN14 A13
 #define IR_PIN15 A14
 
-#define NR_OF_READERS 30
+#define NR_OF_READERS 15
 
 // #define ESP32_RX 2
 // #define ESP32_TX 3
@@ -82,10 +82,10 @@
 byte ssPins[NR_OF_READERS] = {
     SS_1_PIN, SS_2_PIN, SS_3_PIN, SS_4_PIN, SS_5_PIN,
     SS_6_PIN, SS_7_PIN, SS_8_PIN, SS_9_PIN, SS_10_PIN,
-    SS_11_PIN, SS_12_PIN, SS_13_PIN, SS_14_PIN, SS_15_PIN,
-    SS_16_PIN, SS_17_PIN, SS_18_PIN, SS_19_PIN, SS_20_PIN,
-    SS_21_PIN, SS_22_PIN, SS_23_PIN, SS_24_PIN, SS_25_PIN,
-    SS_26_PIN, SS_27_PIN, SS_28_PIN, SS_29_PIN, SS_30_PIN};
+    SS_11_PIN, SS_12_PIN, SS_13_PIN, SS_14_PIN, SS_15_PIN};
+// SS_16_PIN, SS_17_PIN, SS_18_PIN, SS_19_PIN, SS_20_PIN,
+// SS_21_PIN, SS_22_PIN, SS_23_PIN, SS_24_PIN, SS_25_PIN,
+// SS_26_PIN, SS_27_PIN, SS_28_PIN, SS_29_PIN, SS_30_PIN};
 
 byte irPins[numofIR] = { // no longer use this
     IR_PIN1, IR_PIN2, IR_PIN3, IR_PIN4, IR_PIN5,
@@ -121,10 +121,13 @@ void setup()
 
   Serial2.begin(9600);
 
-  SPI.begin(); // Init SPI bus
+  SPI.begin(); // Init SPI bus 
+  SPI.setClockDivider(SPI_CLOCK_DIV64);
 
   for (uint8_t reader = 0; reader < NR_OF_READERS; reader++)
   {
+    pinMode(ssPins[reader], OUTPUT);
+    dw(ssPins[reader], HIGH);
     mfrc522[reader].PCD_Init(ssPins[reader], RST_PIN); // Init each MFRC522 card
     Serial.print(F("Reader "));
     Serial.print(reader);
@@ -161,7 +164,7 @@ void loop()
     String data = Serial2.readStringUntil('\n');
     if (data.startsWith("Open"))
     {
-      //open the door and ring the alarm for 3s
+      // open the door and ring the alarm for 3s
       digitalWrite(DOOR_PIN, HIGH);
       dw(BUZZER_PIN, HIGH);
       lastTurnBuzzerOn = millis();
@@ -171,7 +174,7 @@ void loop()
       digitalWrite(DOOR_PIN, LOW);
     }
   }
-  if (millis() - lastRead > 300)
+  if (millis() - lastRead > 2000)
   {
     modeRead();
     lastRead = millis();
@@ -242,7 +245,9 @@ void modeRead()
       // to show that no card is read.
       String msg = "RFID: " + String(reader + 1) + "," + String(0) + "," + String(FLOOR); // send if the thing is there or not
       Serial2.println(msg);
+      Serial.println(F("No card read"));
     }
+    delay(50);
   }
 }
 
