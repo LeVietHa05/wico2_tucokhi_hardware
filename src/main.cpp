@@ -10,7 +10,7 @@
  * so we will use the uid of the card to identify the card
  * and the database will store the data of the card by the uid
  */
-
+// mrc522 not working, cant findout why, so using IR sensor instead
 //====================================================
 #define RST_PIN 9 // Configurable, see typical pin layout above
 // 15 ss pin
@@ -47,21 +47,22 @@
 
 #define numofIR 15 // no longer user this
 
-#define IR_PIN1 A0
-#define IR_PIN2 A1
-#define IR_PIN3 A2
-#define IR_PIN4 A3
-#define IR_PIN5 A4
-#define IR_PIN6 A5
-#define IR_PIN7 A6
-#define IR_PIN8 A7
-#define IR_PIN9 A8
-#define IR_PIN10 A9
-#define IR_PIN11 A10
-#define IR_PIN12 A11
-#define IR_PIN13 A12
-#define IR_PIN14 A13
-#define IR_PIN15 A14
+// re use the ss pin for ir sensor (coz the mfrc522 not working)
+#define IR_PIN1 53
+#define IR_PIN2 49
+#define IR_PIN3 48
+#define IR_PIN4 47
+#define IR_PIN5 46
+#define IR_PIN6 45
+#define IR_PIN7 44
+#define IR_PIN8 43
+#define IR_PIN9 42
+#define IR_PIN10 41
+#define IR_PIN11 40
+#define IR_PIN12 39
+#define IR_PIN13 38
+#define IR_PIN14 37
+#define IR_PIN15 36
 
 #define NR_OF_READERS 15
 
@@ -121,7 +122,7 @@ void setup()
 
   Serial2.begin(9600);
 
-  SPI.begin(); // Init SPI bus 
+  SPI.begin(); // Init SPI bus
   SPI.setClockDivider(SPI_CLOCK_DIV64);
 
   for (uint8_t reader = 0; reader < NR_OF_READERS; reader++)
@@ -146,6 +147,11 @@ void setup()
 
   digitalWrite(DOOR_PIN, LOW);
   digitalWrite(BUZZER_PIN, LOW);
+
+  for (int i = 0; i < 15; i++)
+  {
+    pinMode(irPins[i], INPUT);
+  }
 }
 //====================================================
 /**
@@ -176,11 +182,11 @@ void loop()
   }
   if (millis() - lastRead > 2000)
   {
-    modeRead();
+    // modeRead();
     lastRead = millis();
   }
 
-  // check the IR
+  // check the IR (this will be main)
   if (millis() - lastCheckThing > TIME_CHECK_THING)
   {
     String msg = "IR: ";
