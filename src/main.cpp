@@ -1,8 +1,11 @@
 #include <Arduino.h>
 #include <SPI.h>
 #include <MFRC522.h>
+#include <Servo.h>
 // softuart for sending data to esp32
 // #include <SoftwareSerial.h>
+
+// Đây là code cho arduino mega pro mini 
 
 //====================================================
 /*
@@ -98,6 +101,7 @@ byte lastThingPos[numofIR] = {0};
 MFRC522 mfrc522[NR_OF_READERS]; // Create MFRC522 instance.
 MFRC522::MIFARE_Key key;
 // SoftwareSerial esp32_Serial(ESP32_RX, ESP32_TX);
+Servo myServo; //control servo to lock the door
 
 byte mode = 0;
 unsigned long uidDec, uidDecTemp; // hien thi so UID dang thap phan
@@ -142,10 +146,11 @@ void setup()
     key.keyByte[i] = 0xFF;
   }
 
-  pinMode(DOOR_PIN, OUTPUT);
+  // pinMode(DOOR_PIN, OUTPUT);
+  myServo.attach(DOOR_PIN);
   pinMode(BUZZER_PIN, OUTPUT);
 
-  digitalWrite(DOOR_PIN, LOW);
+  // digitalWrite(DOOR_PIN, LOW);
   digitalWrite(BUZZER_PIN, LOW);
 
   for (int i = 0; i < 15; i++)
@@ -171,13 +176,15 @@ void loop()
     if (data.startsWith("Open"))
     {
       // open the door and ring the alarm for 3s
-      digitalWrite(DOOR_PIN, HIGH);
+      // digitalWrite(DOOR_PIN, HIGH);
+      myServo.write(0);
       dw(BUZZER_PIN, HIGH);
       lastTurnBuzzerOn = millis();
     }
     else if (data.startsWith("Lock")) // lock the door
     {
-      digitalWrite(DOOR_PIN, LOW);
+      // digitalWrite(DOOR_PIN, LOW);
+      myServo.write(80);
     }
   }
   if (millis() - lastRead > 2000)
